@@ -1,5 +1,23 @@
 {
   "dependencies": {
     "discord.js": "^14.20.0"
-  }
+  },
+  "name": "theodule",
+  "version": "1.0.0",
+  "description": "discord bot",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1neverMind/Theodule.git"
+  },
+  "author": "Théo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/1neverMind/Theodule/issues"
+  },
+  "homepage": "https://github.com/1neverMind/Theodule#readme"
 }

@@ -1,59 +1,55 @@
-const Discord = require("discord.js");
-const config = require("./config.json");
-const { Client, Intents } = require('discord.js');
+const { Client, Collection, Events, GatewayIntentBits, REST, Routes } = require('discord.js');
+const conf = require("./config.json");
+const client = new Client({intents:8});
+const fs = require('node:fs');
+const path = require('node:path');
+//const commandDeploy = require('./deploy-commands.js'),
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+client.commands = new Collection();
 
-const prefix = ';';
+const foldersPath = path.join(__dirname, 'commands');
+const commandFolders = fs.readdirSync(foldersPath);
 
-client.on("message", function(message) {
-	if (message.author.bot) return;
-
-  // NON-PREFIX COMMANDS
-
-  if (message.content == "ce sale weeb de merde") message.reply("hilaire");
-  if (message.content == "feur") message.reply('Ta geule');
-  if (message.content == "furry") message.react('☠️');
-  if (message.content == "lol") message.reply("i");
-  if (message.content == "youn") {
-    for(var i = 0;i<1;i++){
-      message.channel.send(`@${Sky#9432}`);
+for (const folder of commandFolders) {
+  const commandsPath = path.join(foldersPath, folder);
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    if ('data' in command && 'execute' in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
     }
   }
-  if (message.content == "loli") {message.react('💖');message.react('💖');message.react('👮')}
-  //if (message.author == "353601027720871946") message.react('🙏'); //author : moi
-  //if (message.author == "301090610226397186") message.react('💖'); //author : Matis
-  if (message.author == "429656936435286016") {message.react('🇳');message.react('🇦');message.react('🇷');message.react('🇺');message.react('🇹');message.react('🇴');};
-  if (message.content.length > 150) message.reply("T'écris beaucoup mashallah.");
+}
 
-  // PREFIX COMMANDS
+client.once(Events.ClientReady, readyClient => {
+  console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+});
 
-  if (!message.content.startsWith(prefix)) return;
-  const commandBody = message.content.slice(prefix.length);
-  const args = commandBody.split(' ');
-  const command = args.shift().toLowerCase();
+client.on(Events.InteractionCreate, async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+  const command = interaction.client.commands.get(interaction.commandName);
 
-  if (command === "suce") {
-  	message.reply('non.');
+  if (!command) {
+    console.error(`No command matching ${interaction.commandName} was found.`);
+    return;
   }
 
-  if (command === "rand") {
-		message.channel.send("Choisis le nombre minimum chacal");
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+    } else {
+      await interaction.reply({ content: 'There was an error while executing this command!', flags: MessageFlags.Ephemeral });
+    }
   }
-
-  if (command === "m") {
-    message.channel.send("oui");
-    const filter = (reaction, user) => reaction.emoji.name === '💖' && user.id === message.author
-      message.awaitReactions(filter)
-        .then(collected => message.channel.send('Sale pd'))
-        .catch(console.error);
-  }
-
-
 });
 
 
-
-client.login(config.BOT_TOKEN);
+client.login(conf.token);
 
 
