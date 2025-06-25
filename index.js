@@ -1,6 +1,13 @@
-const { Client, Collection, Events, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { Client, Collection, Events, Message, GatewayIntentBits, REST, Routes } = require('discord.js');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, entersState, VoiceConnectionStatus, } = require('@discordjs/voice');
 const conf = require("./config.json");
-const client = new Client({intents:8});
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,           // pour les slash commandes
+    GatewayIntentBits.GuildMessages,    // pour recevoir les messages envoyés
+    GatewayIntentBits.MessageContent    // pour lire le contenu des messages
+  ]
+});
 const fs = require('node:fs');
 const path = require('node:path');
 //const commandDeploy = require('./deploy-commands.js'),
@@ -26,9 +33,11 @@ for (const folder of commandFolders) {
 
 client.once(Events.ClientReady, readyClient => {
   console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+  client.users.send('353601027720871946', 'bordel');
 });
 
-client.on(Events.InteractionCreate, async interaction => {
+client.on(Events.InteractionCreate, 
+async interaction => {
   if (!interaction.isChatInputCommand()) return;
   const command = interaction.client.commands.get(interaction.commandName);
 
@@ -48,6 +57,50 @@ client.on(Events.InteractionCreate, async interaction => {
     }
   }
 });
+
+
+client.on("messageCreate", async (message) => {
+  if (message.author.bot) return;
+  if (message.content.toLowerCase().includes("sexe")) {
+    message.channel.send("🐔 Cot cot codet !");
+  }
+
+  if (message.content.toLowerCase().includes("theodule viens")) {
+    /*const voiceChannel = message.member.voice.channel;
+    if (!voiceChannel) {
+      return message.reply("Tu dois être dans un salon vocal !");
+    }*/
+
+    const connection = joinVoiceChannel({
+      channelId: voiceChannel.id,
+      guildId: message.guild.id,
+      adapterCreator: message.guild.voiceAdapterCreator
+    });
+    try {
+      // Attendre que la connexion soit prête
+      await entersState(connection, VoiceConnectionStatus.Ready, 5_000);
+  console.log('entersState');
+      const player = createAudioPlayer();
+      const resource = createAudioResource(path.join(__dirname, './p.mp3'));
+  console.log('player ressource');
+      connection.subscribe(player);
+      player.play(resource);
+  console.log('ressource played');
+      player.on(AudioPlayerStatus.Idle, () => {
+        connection.destroy(); // Déconnecte le bot une fois le son terminé
+      });
+  console.log('connextion exit');
+      message.reply('🐔 Cot cot cot ! Je parle maintenant.');
+    } catch (error) {
+      console.error(error);
+      message.reply("Erreur lors de la lecture de l'audio.");
+      connection.destroy();
+    }
+
+  }
+
+});
+
 
 
 client.login(conf.token);
